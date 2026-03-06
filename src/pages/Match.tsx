@@ -278,7 +278,7 @@ export default function MatchPage() {
       }
     }
 
-    if (board.every(cell => cell !== null)) return 'draw';
+    if (board.every(cell => cell !== null && cell !== "")) return 'draw';
     return null;
   };
 
@@ -287,7 +287,7 @@ export default function MatchPage() {
     
     const { board, turn } = match.game_state;
     if (turn !== profile.user_id) return;
-    if (board![index] !== null) return;
+    if (board![index] !== null && board![index] !== "") return;
 
     const currentPlayer = players.find(p => p.user_id === profile.user_id);
     if (!currentPlayer || !currentPlayer.symbol) return;
@@ -352,7 +352,7 @@ export default function MatchPage() {
     );
   }
 
-  const board = match.game_state.board || Array(9).fill(null);
+  const board = match.game_state.board || Array(9).fill("");
   const isMyTurn = match.game_state.turn === profile?.user_id;
   const winner = match.game_state.winner;
   const mySymbol = players.find(p => p.user_id === profile?.user_id)?.symbol;
@@ -409,7 +409,7 @@ export default function MatchPage() {
               <button
                 key={i}
                 onClick={() => handleTileClick(i)}
-                disabled={!isMyTurn || cell !== null || !!winner}
+                disabled={!isMyTurn || (cell !== null && cell !== "") || !!winner}
                 className={`w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-zinc-950 flex items-center justify-center text-4xl sm:text-6xl font-black transition-all border-2 ${
                   cell === 'X' ? 'text-emerald-500 border-emerald-500/20' : 
                   cell === 'O' ? 'text-amber-500 border-amber-500/20' : 

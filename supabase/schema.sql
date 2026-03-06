@@ -98,6 +98,13 @@ CREATE POLICY "Users can join rooms" ON room_players FOR INSERT WITH CHECK (auth
 
 -- Matches
 CREATE POLICY "Matches are viewable by room participants" ON matches FOR SELECT USING (true);
+CREATE POLICY "Participants can insert matches" ON matches FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM room_players 
+    WHERE room_players.room_id = matches.room_id 
+    AND room_players.user_id = auth.uid()
+  )
+);
 CREATE POLICY "Participants can update match state" ON matches FOR UPDATE USING (
   EXISTS (
     SELECT 1 FROM room_players 
@@ -105,3 +112,6 @@ CREATE POLICY "Participants can update match state" ON matches FOR UPDATE USING 
     AND room_players.user_id = auth.uid()
   )
 );
+
+-- Rooms update policy
+CREATE POLICY "Host can update room" ON rooms FOR UPDATE USING (auth.uid() = host_id);

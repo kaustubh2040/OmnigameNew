@@ -131,30 +131,44 @@ export default function RoomPage() {
   };
 
   const startGame = async () => {
-    if (!room || players.length < 2) return;
+    if (!room || players.length < 2 || !profile) return;
+    if (room.host_id !== profile.user_id) return; // Only host can start
     
     try {
-      // 1. Create the match
-      const initialState = {
-        board: Array(9).fill(null),
-        turn: room.host_id, // Host starts
-        winner: null
-      };
-
-      const { data: match, error: matchError } = await supabase
+      // 1. Check if an active match already exists to prevent duplicates
+      const { data: existingMatch } = await supabase
         .from('matches')
-        .insert({
-          room_id: room.room_id,
-          game_state: initialState,
-          current_turn: room.host_id,
-          status: 'active'
-        })
-        .select()
-        .single();
+        .select('match_id')
+        .eq('room_id', room.room_id)
+        .eq('status', 'active')
+        .maybeSingle();
 
-      if (matchError) throw matchError;
+      let matchId = existingMatch?.match_id;
 
-      // 2. Update room status (this triggers redirection for guest)
+      if (!matchId) {
+        // 2. Create the match if it doesn't exist
+        const initialState = {
+          board: Array(9).fill(""),
+          turn: room.host_id, // Host starts
+          winner: null
+        };
+
+        const { data: newMatch, error: matchError } = await supabase
+          .from('matches')
+          .insert({
+            room_id: room.room_id,
+            game_state: initialState,
+            current_turn: room.host_id,
+            status: 'active'
+          })
+          .select()
+          .single();
+
+        if (matchError) throw matchError;
+        matchId = newMatch.match_id;
+      }
+
+      // 3. Update room status (this triggers redirection for guest)
       const { error: roomError } = await supabase
         .from('rooms')
         .update({ status: 'playing' })
@@ -162,10 +176,14 @@ export default function RoomPage() {
 
       if (roomError) throw roomError;
 
-      // 3. Navigate host
-      navigate(`/match/${match.match_id}`);
-    } catch (err) {
+      // 4. Navigate host
+      navigate(`/match/${matchId}`);
+    } catch (err: any) {
       console.error('Error starting game:', err);
+      // If it's an RLS error, we should probably tell the user or at least log it clearly
+      if (err.message?.includes('RLS')) {
+        alert('Database permissions error. Please check RLS policies.');
+      }
     }
   };
 
