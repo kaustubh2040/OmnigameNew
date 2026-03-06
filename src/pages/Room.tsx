@@ -200,28 +200,32 @@ export default function RoomPage() {
   const canStart = players.length >= 2;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 pb-24 sm:pb-6">
       <button 
         onClick={() => navigate('/dashboard')}
-        className="flex items-center gap-2 text-zinc-500 hover:text-zinc-100 transition-colors mb-8"
+        className="flex items-center gap-2 text-zinc-500 hover:text-zinc-100 transition-colors mb-6 sm:mb-8 text-sm"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Dashboard
       </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8">
-            <div className="flex items-center justify-between mb-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 sm:p-8"
+          >
+            <div className="flex items-center justify-between mb-6 sm:mb-8">
               <div>
-                <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1 block">
+                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1 block">
                   {room?.game_type === 'tic-tac-toe' ? 'Tic Tac Toe' : 'Rock Paper Scissors'}
                 </span>
-                <h1 className="text-3xl font-bold">Game Lobby</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold">Game Lobby</h1>
               </div>
-              <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 px-4 py-2 rounded-2xl">
+              <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl">
                 <Users className="w-4 h-4 text-zinc-500" />
-                <span className="font-mono">{players.length} / {room?.max_players}</span>
+                <span className="font-mono text-xs sm:text-sm">{players.length} / {room?.max_players}</span>
               </div>
             </div>
 
@@ -230,10 +234,15 @@ export default function RoomPage() {
                 {players.map((player) => (
                   <motion.div
                     key={player.user_id}
+                    layout
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-2xl"
+                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                      player.user_id === profile?.user_id 
+                        ? 'bg-emerald-500/5 border-emerald-500/20' 
+                        : 'bg-zinc-950 border-zinc-800'
+                    }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
@@ -242,17 +251,17 @@ export default function RoomPage() {
                         </span>
                       </div>
                       <div>
-                        <p className="font-semibold flex items-center gap-2">
+                        <p className="font-semibold flex items-center gap-2 text-sm sm:text-base">
                           {player.users?.username}
                           {player.user_id === room?.host_id && (
-                            <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded uppercase tracking-tighter border border-emerald-500/20">Host</span>
+                            <span className="text-[8px] bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded uppercase tracking-tighter border border-emerald-500/20">Host</span>
                           )}
                         </p>
-                        <p className="text-xs text-zinc-500">Level {player.users?.level} • {player.users?.xp} XP</p>
+                        <p className="text-[10px] sm:text-xs text-zinc-500">Level {player.users?.level} • {player.users?.xp} XP</p>
                       </div>
                     </div>
                     {player.symbol && (
-                      <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-zinc-800 font-mono font-bold text-zinc-400">
+                      <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-zinc-800 font-mono font-bold text-zinc-400 text-sm">
                         {player.symbol}
                       </div>
                     )}
@@ -262,17 +271,17 @@ export default function RoomPage() {
 
               {Array.from({ length: (room?.max_players || 2) - players.length }).map((_, i) => (
                 <div key={`empty-${i}`} className="p-4 bg-zinc-950/50 border border-zinc-800/50 border-dashed rounded-2xl flex items-center justify-center">
-                  <p className="text-zinc-600 text-sm italic">Waiting for player...</p>
+                  <p className="text-zinc-600 text-xs sm:text-sm italic">Waiting for player...</p>
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {isHost && (
             <button
               onClick={startGame}
               disabled={!canStart}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-950 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-950 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
             >
               <Play className="w-5 h-5 fill-current" />
               Start Match
@@ -281,26 +290,30 @@ export default function RoomPage() {
           {!isHost && (
             <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex items-center gap-3">
               <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
-              <p className="text-sm text-emerald-500/80">Waiting for host to start the game...</p>
+              <p className="text-xs sm:text-sm text-emerald-500/80">Waiting for host to start the game...</p>
             </div>
           )}
         </div>
 
         <aside className="space-y-6">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
-            <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Invite Friends</h2>
-            <p className="text-xs text-zinc-400 mb-4 leading-relaxed">Share this code with your friends to let them join this room.</p>
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6"
+          >
+            <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Invite Friends</h2>
+            <p className="text-[10px] text-zinc-400 mb-4 leading-relaxed">Share this code with your friends to let them join this room.</p>
             <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center gap-4">
-              <span className="text-4xl font-black tracking-[0.2em] font-mono text-emerald-500">{code}</span>
+              <span className="text-3xl sm:text-4xl font-black tracking-[0.2em] font-mono text-emerald-500">{code}</span>
               <button 
                 onClick={copyCode}
-                className="w-full flex items-center justify-center gap-2 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-sm font-medium"
+                className="w-full flex items-center justify-center gap-2 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-xs font-medium"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                 {copied ? 'Copied!' : 'Copy Code'}
               </button>
             </div>
-          </div>
+          </motion.div>
         </aside>
       </div>
     </div>
