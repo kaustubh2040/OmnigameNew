@@ -1,0 +1,5 @@
+{
+  "name": "OmniPlay Multiplayer Platform",
+  "description": "A scalable real-time multiplayer gaming platform featuring Tic-Tac-Toe and Rock-Paper-Scissors.",
+  "requestFramePermissions": []
+}
