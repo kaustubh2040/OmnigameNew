@@ -5,27 +5,45 @@ import { LogIn, Mail, Lock, Github, Chrome } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Login() {
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError(error.message);
+    try {
+      if (mode === 'login') {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        navigate('/dashboard');
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              username: email.split('@')[0], // Default username from email
+            }
+          }
+        });
+        if (error) throw error;
+        
+        // Some Supabase configs auto-confirm, others don't.
+        // We'll try to navigate, if it fails due to session, the user will see a message or stay on login.
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.message);
       setLoading(false);
-    } else {
-      navigate('/dashboard');
     }
   };
 
@@ -49,11 +67,15 @@ export default function Login() {
           <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 border border-emerald-500/20">
             <LogIn className="w-8 h-8 text-emerald-500" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">OmniPlay</h1>
-          <p className="text-zinc-400 mt-2">Sign in to start playing</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {mode === 'login' ? 'OmniPlay' : 'Create Account'}
+          </h1>
+          <p className="text-zinc-400 mt-2">
+            {mode === 'login' ? 'Sign in to start playing' : 'Join the community today'}
+          </p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleAuth} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-1.5 ml-1">Email</label>
             <div className="relative">
@@ -95,7 +117,7 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-semibold py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/20"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? (mode === 'login' ? 'Signing in...' : 'Creating account...') : (mode === 'login' ? 'Sign In' : 'Sign Up')}
           </button>
         </form>
 
@@ -119,8 +141,14 @@ export default function Login() {
         </div>
 
         <p className="mt-8 text-center text-sm text-zinc-500">
-          Don't have an account?{' '}
-          <button className="text-emerald-500 hover:underline font-medium">Sign up</button>
+          {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
+          <button 
+            type="button"
+            onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+            className="text-emerald-500 hover:underline font-medium"
+          >
+            {mode === 'login' ? 'Sign up' : 'Sign in'}
+          </button>
         </p>
       </motion.div>
     </div>
