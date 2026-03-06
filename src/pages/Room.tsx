@@ -20,20 +20,9 @@ export default function RoomPage() {
     if (!code) return;
     fetchRoomData();
 
-    // Subscribe to room_players changes
-    const channel = supabase
-      .channel(`room:${code}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'room_players',
-        },
-        () => {
-          fetchPlayers();
-        }
-      )
+    // Subscribe to room status changes (for game start)
+    const roomChannel = supabase
+      .channel(`room_status:${code}`)
       .on(
         'postgres_changes',
         {
@@ -45,7 +34,6 @@ export default function RoomPage() {
         (payload) => {
           const updatedRoom = payload.new as Room;
           if (updatedRoom.status === 'playing') {
-            // Game started! Redirect to match
             fetchActiveMatch(updatedRoom.room_id);
           }
         }
@@ -53,9 +41,34 @@ export default function RoomPage() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(roomChannel);
     };
   }, [code]);
+
+  useEffect(() => {
+    if (!room?.room_id) return;
+
+    // Subscribe to room_players changes for this specific room
+    const playersChannel = supabase
+      .channel(`room_players:${room.room_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'room_players',
+          filter: `room_id=eq.${room.room_id}`,
+        },
+        () => {
+          fetchPlayers(room.room_id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(playersChannel);
+    };
+  }, [room?.room_id]);
 
   async function fetchActiveMatch(roomId: string) {
     const { data, error } = await supabase
